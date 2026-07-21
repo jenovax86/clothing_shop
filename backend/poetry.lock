@@ -251,6 +251,23 @@ dev = ["black", "isort", "mypy", "types-freezegun"]
 test = ["freezegun", "pytest (>=6.0,<7.0)", "pytest-cov"]
 
 [[package]]
+name = "mysqlclient"
+version = "2.2.8"
+description = "Python interface to MySQL"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "mysqlclient-2.2.8-cp310-cp310-win_amd64.whl", hash = "sha256:86db31bba7b3480fec2751350e9790e24f016f89af33a87bab7e79f7196474e8"},
+    {file = "mysqlclient-2.2.8-cp311-cp311-win_amd64.whl", hash = "sha256:60c9ed339dc09e3d5380cc2a9f42e86754fee25a661ced77a02df77990664c92"},
+    {file = "mysqlclient-2.2.8-cp312-cp312-win_amd64.whl", hash = "sha256:000c7ec3d11e7c411db832e4cfcd7f05db47464326381f5d5ae991b4bb572f93"},
+    {file = "mysqlclient-2.2.8-cp313-cp313-win_amd64.whl", hash = "sha256:a81f5e12f8d05439709cb02fba97f9f76d1a6c528164f2260d8798fec969e300"},
+    {file = "mysqlclient-2.2.8-cp314-cp314-win_amd64.whl", hash = "sha256:9bed7c8d3b629bdc09e17fb628d5b3b0a5fd1f12b09432b464b9126c727bedc0"},
+    {file = "mysqlclient-2.2.8-cp314-cp314t-win_amd64.whl", hash = "sha256:260cce0e81446c83bf0a389e0fae38d68547d9f8fc0833bc733014e10ce28a99"},
+    {file = "mysqlclient-2.2.8.tar.gz", hash = "sha256:8ed20c5615a915da451bb308c7d0306648a4fd9a2809ba95c992690006306199"},
+]
+
+[[package]]
 name = "pycparser"
 version = "3.0"
 description = "C parser in Python"
@@ -323,4 +340,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "8189f28ff1c1ac796f88140cd5517a34c8883eebf79537242e3a55a6da8fcb24"
+content-hash = "967d1374fdcfaeaaf9c56b75ebcbc05e94c3a0b3732ffbecec591231b427e788"
