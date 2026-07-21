@@ -1,2 +1,2 @@
-# clothing_shop
-Clothing shop written in django
+# Clothing Shop
+## Clothing shop written in django
