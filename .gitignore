@@ -5,8 +5,8 @@ __pycache__/
 
 # C extensions
 *.so
-.env
 ../.idea/
+.env
 # Distribution / packaging
 .Python
 build/
@@ -149,7 +149,7 @@ activemq-data/
 *.sage.py
 
 # Environments
-.env
+../.env
 .envrc
 .venv
 env/
