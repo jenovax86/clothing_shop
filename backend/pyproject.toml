@@ -11,7 +11,8 @@ dependencies = [
     "django (>=5.2,<6.0.0)",
     "dotenv (>=0.9.9,<0.10.0)",
     "jwt (>=1.4.0,<2.0.0)",
-    "mysqlclient (>=2.2.8,<3.0.0)"
+    "mysqlclient (>=2.2.8,<3.0.0)",
+    "djangorestframework (>=3.17.1,<4.0.0)"
 ]
 
 
