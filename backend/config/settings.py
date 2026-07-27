@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
+print(BASE_DIR)
 SECRET_KEY = "django-insecure-9ixy0)i0#jvp$2v!$de=jwfz4_!uc@-lr4mmi+^-@y9u@)(s7-"
 DEBUG = True
 ALLOWED_HOSTS = []
@@ -30,6 +31,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+
+REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "core.handlers.api.api_exception_handler",
+}
 
 TEMPLATES = [
     {
