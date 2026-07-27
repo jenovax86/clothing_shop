@@ -13,13 +13,13 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: backend/Dockerfile
 
     ports:
       - "8000:8000"
 
     env_file:
-      - .env
+      - backend/.env
 
     depends_on:
       - database
