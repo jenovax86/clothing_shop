@@ -1,5 +1,9 @@
 from django.http import HttpResponse
+from rest_framework.views import APIView
+
+from core.exceptions import NotFoundException, ConflictException
 
 
-def test(request: HttpResponse) -> HttpResponse:
-    return HttpResponse("Hello World!")
+class TestView(APIView):
+    def get(self, request):
+        raise ConflictException()
