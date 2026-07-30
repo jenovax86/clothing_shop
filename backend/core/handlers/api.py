@@ -14,7 +14,6 @@ def api_exception_handler(exception: Exception, context: dict[str, Any]) -> Resp
         },
             status=response.status_code,
         )
-        return response
 
     if isinstance(exception, AbstractException):
         return Response(
