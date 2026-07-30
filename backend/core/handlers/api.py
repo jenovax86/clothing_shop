@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from core.exceptions import AbstractException
 
 
-def api_exception_handler(exception: Exception, context: dict[str, Any]) -> Response | None:
+def api_exception_handler(exception: Exception, context: dict[str, Any]) -> Response:
     response = drf_exception_handler(exception, context)
 
     if response is not None:
@@ -22,6 +22,7 @@ def api_exception_handler(exception: Exception, context: dict[str, Any]) -> Resp
         {
             "success": False,
             "message": "Internal server error",
+
         },
         status=500,
     )
