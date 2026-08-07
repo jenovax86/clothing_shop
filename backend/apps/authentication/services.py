@@ -26,9 +26,6 @@ class TokenService:
 
     @staticmethod
     def verify_token(token: str) -> dict:
-        print(jwt.exceptions.ExpiredSignatureError)
-        print(jwt.exceptions.InvalidSignatureError)
-        print(jwt.exceptions.InvalidTokenError)
         logger.info(f"Decode token {token}")
         if not token:
             logger.warning("Token not found")
