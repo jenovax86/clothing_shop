@@ -25,21 +25,28 @@ class TokenService:
         return jwt.encode(payload, os.getenv('JWT_SECRET'), algorithm='HS256')
 
     @staticmethod
-    def verify_token(token: str) -> dict:
-        logger.info(f"Decode token {token}")
-        if not token:
-            logger.warning("Token not found")
-            raise TokenNotFound("Token not found")
+    def decode_token(token: str) -> dict:
+        logger.info(f"Decoding token: {token}")
         try:
-            valid_token: str = token.split(" ")[1]
-            decoded_token: dict = jwt.decode(valid_token, os.getenv('JWT_SECRET'), algorithms=['HS256'])
-            return decoded_token
+            decoded_token: dict = jwt.decode(token, os.getenv('JWT_SECRET'), algorithms=['HS256'])
         except jwt.InvalidTokenError:
             logger.warning("Invalid token")
             raise TokenInvalid("Invalid token")
         except jwt.ExpiredSignatureError:
             logger.warning("Expired token")
             raise TokenExpired("Expired token")
+        return decoded_token
+
+    @staticmethod
+    def verify_token(token: str) -> dict:
+        logger.info(f"Decode token {token}")
+        if not token:
+            logger.warning("Token not found")
+            raise TokenNotFound("Token not found")
+
+        valid_token: str = token.split(" ")[1]
+        decoded_token: dict = TokenService.decode_token(valid_token)
+        return decoded_token
 
 
 class AuthenticationService:
