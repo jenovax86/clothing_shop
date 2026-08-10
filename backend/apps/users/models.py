@@ -18,7 +18,7 @@ class User(models.Model):
 
 class Address(models.Model):
     id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     country = models.CharField(max_length=20, null=False, blank=False)
     zip_code = models.CharField(max_length=20, null=False, blank=False)
     city = models.CharField(max_length=10, null=False, blank=False)
