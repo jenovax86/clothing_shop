@@ -68,9 +68,3 @@ class AuthenticationService:
 
         logger.info(f"User {username} authenticated")
         return user
-
-
-class IsAdmin:
-    @staticmethod
-    def is_admin(user: User) -> bool:
-        return user.role == "admin"
