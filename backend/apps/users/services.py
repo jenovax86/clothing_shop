@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 import logging
@@ -88,4 +90,6 @@ class UserService:
         if not Address.objects.filter(id=id).exists():
             logger.warning("Address does not exist")
             raise AddressDoesNotExist("Address does not exist")
-        Address.objects.filter(id=id).delete()
+        address = Address.objects.get(id=id)
+        address.deleted_at = datetime.now(timezone.utc)
+        address.save(update_fields=["deleted_at"])
