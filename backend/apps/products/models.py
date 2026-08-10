@@ -1,8 +1,8 @@
 from django.db import models
 
 
-class Categories(models.Model):
-    class Category(models.TextChoices):
+class Category(models.Model):
+    class Categories(models.TextChoices):
         T_SHIRTS = "t_shirts", "T-Shirts"
         SHIRTS = "shirts", "Shirts"
         HOODIES = "hoodies", "Hoodies"
@@ -28,7 +28,7 @@ class Categories(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
 
-class Products(models.Model):
+class Product(models.Model):
     class Gender(models.TextChoices):
         MALE = "male", "Male"
         FEMALE = "female", "Female"
