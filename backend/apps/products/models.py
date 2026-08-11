@@ -22,7 +22,7 @@ class Category(models.Model):
         ACCESSORIES = "accessories", "Accessories"
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=30, choices=Category.choices, null=False, blank=False)
+    name = models.CharField(max_length=30, choices=Categories.choices, null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -60,7 +60,7 @@ class Product(models.Model):
 
     id = models.AutoField(primary_key=True)
     gender = models.CharField(max_length=20, choices=Gender.choices, blank=True, null=True)
-    category = models.ForeignKey(Categories, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=False, blank=False)
     size = models.CharField(max_length=15, choices=Sizes.choices, null=False, blank=False)
     price = models.FloatField(null=False, blank=False)
