@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "apps.test_app.apps.TestAppConfig",
     "apps.authentication.apps.AuthenticationConfig",
     "apps.users.apps.UsersConfig",
+    "apps.products.apps.ProductsConfig",
 ]
 
 MIDDLEWARE = [
@@ -37,6 +38,8 @@ ROOT_URLCONF = "config.urls"
 
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "core.handlers.api.api_exception_handler",
+    "DEFAULT_AUTHENTICATION_CLASSES": ["utils.authentication.JWTAuthentication"],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
 }
 
 TEMPLATES = [

@@ -1,6 +1,7 @@
 import logging
 
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         logger.info(f"Post request: {request.data}")
         serializer = RegisterSerializer(data=request.data)
@@ -28,6 +31,8 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         logger.info(f"Post request: {request.data}")
         serializer = LoginSerializer(data=request.data)

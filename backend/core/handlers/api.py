@@ -12,14 +12,6 @@ def api_exception_handler(exception: Exception, context: dict[str, Any]) -> Resp
     logger.exception(exception)
     response = drf_exception_handler(exception, context)
 
-    if response is not None:
-        return Response({
-            "success": False,
-            "message": response.error_code,
-        },
-            status=response.status_code,
-        )
-
     if isinstance(exception, AbstractException):
         return Response(
             {
@@ -28,6 +20,15 @@ def api_exception_handler(exception: Exception, context: dict[str, Any]) -> Resp
             },
             status=exception.status_code,
         )
+
+    if response is not None:
+        return Response({
+            "success": False,
+            "message": response.data,
+        },
+            status=response.status_code,
+        )
+
     return Response(
         {
             "success": False,
