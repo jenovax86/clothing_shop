@@ -3,9 +3,10 @@ from .user import UserDidNotFound, PasswordDidNotMatch, UsernameIsRequired, User
     PasswordIsIdentical, AddressCantBeEmpty, AddressAlreadyExists, AddressDoesNotExist
 from .authentication import TokenNotFound, TokenInvalid, TokenExpired
 from .category import CategoryAlreadyExists, CategoryDoesNotExist
+from .product import ProductAlreadyExists, ProductDoesNotExist
 
 __all__ = ["AbstractException", "NotFoundException", "ConflictException", "UserDidNotFound", "PasswordDidNotMatch",
            "TokenNotFound", "TokenInvalid", "TokenExpired", "UsernameIsRequired", "UserAlreadyExists",
            "PasswordIsIdentical",
            "PasswordIsRequired", "AddressCantBeEmpty", "AddressAlreadyExists", "AddressDoesNotExist",
-           "CategoryDoesNotExist", "CategoryAlreadyExists", ]
+           "CategoryDoesNotExist", "CategoryAlreadyExists", "ProductDoesNotExist", "ProductAlreadyExists", ]
