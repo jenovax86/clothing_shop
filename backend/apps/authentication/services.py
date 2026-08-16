@@ -29,12 +29,13 @@ class TokenService:
         logger.info(f"Decoding token: {token}")
         try:
             decoded_token: dict = jwt.decode(token, os.getenv('JWT_SECRET'), algorithms=['HS256'])
-        except jwt.InvalidTokenError:
-            logger.warning("Invalid token")
-            raise TokenInvalid("Invalid token")
         except jwt.ExpiredSignatureError:
             logger.warning("Expired token")
             raise TokenExpired("Expired token")
+        except jwt.InvalidTokenError:
+            logger.warning("Invalid token")
+            raise TokenInvalid("Invalid token")
+
         return decoded_token
 
     @staticmethod
