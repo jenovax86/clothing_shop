@@ -14,7 +14,7 @@ class JWTAuthentication(BaseAuthentication):
         logger.info('Authenticating with JWT')
         token = request.headers.get("Authorization")
         if not token:
-            raise TokenNotFound("Token not found")
+            return None
 
         try:
             logger.info('Verifying JWT token')
@@ -23,11 +23,11 @@ class JWTAuthentication(BaseAuthentication):
             user = UserService.find_user_by_id(user_id)
             return user, token
         except TokenExpired:
-            logger.info('Expired token')
+            logger.warning('Expired token')
             raise TokenExpired("Expired token")
         except TokenInvalid:
-            logger.info('Invalid token')
+            logger.warning('Invalid token')
             raise TokenInvalid("Invalid token")
         except UserDidNotFound:
-            logger.info('User did not found')
-            raise UserDidNotFound("UserDidNotFound")
+            logger.warning('User did not found')
+            raise UserDidNotFound("User did not found")
