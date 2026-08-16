@@ -1,7 +1,8 @@
+from rest_framework.permissions import BasePermission
+
 from apps.users.models import User
 
 
-class IsAdmin:
-    @staticmethod
-    def is_admin(user: User) -> bool:
-        return user.role == "admin"
+class IsAdmin(BasePermission):
+    def has_permission(self, request, view) -> bool:
+        return request.user.role == "admin"
