@@ -59,21 +59,22 @@ class UserService:
         user.save(update_fields=["password"])
 
     @staticmethod
-    def add_user_address(user: User, address_data: dict) -> Address:
-        if not address_data:
+    def add_user_address(user: User, address_fields: dict) -> Address:
+        if not address_fields:
             logger.warning("Address cannot be None")
             raise AddressCantBeEmpty("Address cannot be empty.")
 
-        if Address.objects.filter(**address_data).exists():
+        if Address.objects.filter(**address_fields).exists():
             raise AddressAlreadyExists("Address already exists")
 
-        address = Address.objects.create(user=user, zip_code=address_data["zip_code"], country=address_data["country"],
-                                         city=address_data["city"],
-                                         province=address_data["province"])
+        address = Address.objects.create(user=user, zip_code=address_fields["zip_code"],
+                                         country=address_fields["country"],
+                                         city=address_fields["city"],
+                                         province=address_fields["province"])
         return address
 
     @staticmethod
-    def change_user_address(user: User, address_id: int, **address_fields) -> None:
+    def change_user_address(user: User, address_id: int, address_fields: dict) -> None:
         old_address = Address.objects.filter(user_id=user.id, id=address_id).first()
         if old_address is None:
             logger.warning("Address does not exist")
@@ -82,6 +83,7 @@ class UserService:
         old_address.country = address_fields["country"]
         old_address.city = address_fields["city"]
         old_address.zip_code = address_fields["zip_code"]
+        old_address.province = address_fields["province"]
         old_address.save()
 
     @staticmethod
