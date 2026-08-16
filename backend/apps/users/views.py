@@ -1,10 +1,10 @@
 import logging
 
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.authentication.services import TokenService
 from apps.users.serializers import ChangeUsernameSerializer, ChangePasswordSerializer, AddressSerializer
 from apps.users.services import UserService
 from core.exceptions import PasswordIsIdentical
@@ -13,11 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 class ChangeUsername(APIView):
+    permission_classes = [IsAuthenticated]
+
     def patch(self, request):
         logger.info(f"User requested")
         serializer = ChangeUsernameSerializer(data=request.data)
         if serializer.is_valid():
-            UserService.change_username(request.user.username, serializer.validated_data["username"])
+            UserService.change_username(request.user, serializer.validated_data["username"])
             logger.info(f"User {request.user} changed successfully")
             return Response({
                 "success": True,
@@ -27,6 +29,8 @@ class ChangeUsername(APIView):
 
 
 class ChangePassword(APIView):
+    permission_classes = [IsAuthenticated]
+
     def patch(self, request):
         logger.info(f"User password requested")
         serializer = ChangePasswordSerializer(data=request.data)
@@ -48,14 +52,13 @@ class ChangePassword(APIView):
 
 
 class CreateAddress(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         logger.info(f"Address requested")
         serializer = AddressSerializer(data=request.data)
         if serializer.is_valid():
-            UserService.add_user_address(user=request.user, country=serializer.validated_data["country"],
-                                         zip_code=serializer.validated_data["zip_code"],
-                                         city=serializer.validated_data["city"],
-                                         province=serializer.validated_data["province"])
+            UserService.add_user_address(user=request.user, address_data=serializer.validated_data)
             logger.info(f"Create {request.user.username} address")
             return Response({
                 "success": True,
@@ -65,6 +68,8 @@ class CreateAddress(APIView):
 
 
 class ChangeAddress(APIView):
+    permission_classes = [IsAuthenticated]
+
     def patch(self, request, address_id):
         logger.info(f"Address requested for changing")
         serializer = AddressSerializer(data=request.data, partial=True)
@@ -80,6 +85,8 @@ class ChangeAddress(APIView):
 
 
 class DeleteAddress(APIView):
+    permission_classes = [IsAuthenticated]
+
     def patch(self, request, address_id):
         logger.info(f"Address requested")
         UserService.delete_address(address_id)
