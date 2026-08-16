@@ -21,26 +21,22 @@ class UserService:
         return user
 
     @staticmethod
-    def find_user_by_id(id: int) -> User:
-        if not User.objects.filter(id=id).exists():
+    def find_user_by_id(user_id: int) -> User:
+        try:
+            return User.objects.get(id=user_id)
+        except User.DoesNotExist:
             logger.warning("User not found")
             raise UserDidNotFound(f"User {id} not found")
-        return User.objects.get(id=id)
 
     @staticmethod
-    def change_username(old_username: str, new_username: str) -> None:
-        if not old_username or not new_username:
+    def change_username(user: User, new_username: str) -> None:
+        if not new_username:
             logger.warning("Username cannot be None")
             raise UsernameIsRequired("Username is required")
 
         if User.objects.filter(username=new_username).exists():
             logger.warning("Username already exists")
             raise UserAlreadyExists("Username already exists")
-        try:
-            user: User = User.objects.get(username=old_username)
-        except User.DoesNotExist:
-            logger.warning("Username does not exist")
-            raise UserDidNotFound("Username not found")
 
         user.username = new_username
         user.save(update_fields=["username"])
@@ -63,15 +59,18 @@ class UserService:
         user.save(update_fields=["password"])
 
     @staticmethod
-    def add_user_address(**address) -> None:
-        if not address:
+    def add_user_address(user: User, address_data: dict) -> Address:
+        if not address_data:
             logger.warning("Address cannot be None")
             raise AddressCantBeEmpty("Address cannot be empty.")
 
-        if Address.objects.filter(**address).exists():
+        if Address.objects.filter(**address_data).exists():
             raise AddressAlreadyExists("Address already exists")
 
-        Address.objects.create(**address)
+        address = Address.objects.create(user=user, zip_code=address_data["zip_code"], country=address_data["country"],
+                                         city=address_data["city"],
+                                         province=address_data["province"])
+        return address
 
     @staticmethod
     def change_user_address(user: User, address_id: int, **address_fields) -> None:
