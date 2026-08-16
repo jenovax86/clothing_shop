@@ -58,7 +58,7 @@ class CreateAddress(APIView):
         logger.info(f"Address requested")
         serializer = AddressSerializer(data=request.data)
         if serializer.is_valid():
-            UserService.add_user_address(user=request.user, address_data=serializer.validated_data)
+            UserService.add_user_address(user=request.user, address_fields=serializer.validated_data)
             logger.info(f"Create {request.user.username} address")
             return Response({
                 "success": True,
@@ -73,9 +73,8 @@ class ChangeAddress(APIView):
     def patch(self, request, address_id):
         logger.info(f"Address requested for changing")
         serializer = AddressSerializer(data=request.data, partial=True)
-
         if serializer.is_valid():
-            UserService.change_user_address(request.user, address_id, **serializer.validated_data)
+            UserService.change_user_address(request.user, address_id, address_fields=serializer.validated_data)
             logger.info("Changed Address successfully")
             return Response({
                 "success": True,
