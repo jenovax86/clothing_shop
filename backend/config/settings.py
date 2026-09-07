@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-from core.logging import LOGGING
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-9ixy0)i0#jvp$2v!$de=jwfz4_!uc@-lr4mmi+^-@y9u@)(s7-"
 DEBUG = True
@@ -62,11 +60,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("DB_DATABASE"),
-        "USER": os.getenv("DB_USER"),
-        "HOST": os.getenv("DB_HOST"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "PORT": os.getenv("DB_PORT"),
+        "HOST": os.getenv("DATABASE_HOST"),
+        "USER": os.getenv("DATABASE_USER"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD"),
+        "NAME": os.getenv("DATABASE_NAME"),
+        "PORT": os.getenv("DATABASE_PORT"),
 
     }
 }
@@ -96,6 +94,50 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-LOGGING = LOGGING
+LOG_DIR = BASE_DIR / "logs"
+LOG_FILE = LOG_DIR / "app.log"
+
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+LOG_FILE.touch(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+            "level": "INFO",
+
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": str(LOG_FILE),
+            "formatter": "verbose",
+            "level": "WARNING",
+        },
+    },
+
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
