@@ -8,6 +8,9 @@ class Role(models.TextChoices):
 
 
 class User(AbstractBaseUser):
+    class Meta:
+        db_table = "users"
+
     id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=20, unique=True, null=False, blank=False)
     password = models.CharField(max_length=100, null=False, blank=False)
@@ -20,6 +23,9 @@ class User(AbstractBaseUser):
 
 
 class Address(models.Model):
+    class Meta:
+        db_table = "addresses"
+
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     country = models.CharField(max_length=20, null=False, blank=False)
