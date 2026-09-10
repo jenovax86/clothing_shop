@@ -13,9 +13,9 @@ class TokenExpired(AbstractException):
     error_code = "Token expired"
 
 
-class TokenInvalid(AbstractException):
+class InvalidToken(AbstractException):
     status_code = HTTPStatus.CONFLICT
-    error_code = "Token invalid"
+    error_code = "Invalid token"
 
 
 class TokenNotFound(AbstractException):
