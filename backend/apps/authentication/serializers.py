@@ -21,6 +21,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return value
 
+    def validate_password(self, value: str) -> str:
+        if len(value) < 5:
+            logger.info(f"Password too short: {value}")
+            raise serializers.ValidationError("Password too short")
+
+        return value
+
 
 class LoginSerializer(serializers.ModelSerializer):
     class Meta:
