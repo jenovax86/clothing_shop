@@ -1,71 +1,67 @@
-import os
 import jwt
 from datetime import datetime, timedelta, timezone
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
-from logging import getLogger
-
+from django.contrib.auth.hashers import make_password, check_password
 from apps.users.models import User
-from core.exceptions import UserDidNotFound, PasswordDidNotMatch, TokenNotFound, TokenInvalid, TokenExpired
-
-logger = getLogger(__name__)
+from .exceptions import TokenNotFound, InvalidToken, TokenExpired
+from apps.users.exceptions import UserNotFound, IncorrectCredentials
 
 
 class TokenService:
+    def __init__(self, jwt_secret, logger):
+        self.jwt_secret = jwt_secret
+        self.logger = logger
 
-    @staticmethod
-    def generate_access_token(user_id: int) -> str:
-        logger.info(f"Generating token for user {user_id}")
+    def generate_access_token(self, user_id: int) -> str:
+        self.logger.info(f"Generating token for user {user_id}")
         payload = {
             'user_id': user_id,
             'exp': datetime.now(timezone.utc) + timedelta(hours=5),
             'iat': datetime.now(timezone.utc)
         }
-        logger.info(f"payload: {payload}")
-        return jwt.encode(payload, os.getenv('JWT_SECRET'), algorithm='HS256')
+        self.logger.info(f"payload: {payload}")
 
-    @staticmethod
-    def decode_token(token: str) -> dict:
-        logger.info(f"Decoding token: {token}")
+        return jwt.encode(
+            payload,
+            self.jwt_secret,
+            algorithm='HS256'
+        )
+
+    def __decode_token(self, token: str) -> dict:
         try:
-            decoded_token: dict = jwt.decode(token, os.getenv('JWT_SECRET'), algorithms=['HS256'])
+            return jwt.decode(token, self.jwt_secret, algorithms=['hmac'])
         except jwt.ExpiredSignatureError:
-            logger.warning("Expired token")
+            self.logger.warning("Expired token")
             raise TokenExpired("Expired token")
         except jwt.InvalidTokenError:
-            logger.warning("Invalid token")
-            raise TokenInvalid("Invalid token")
+            self.logger.warning("Invalid token")
+            raise InvalidToken("Invalid token exception")
 
-        return decoded_token
-
-    @staticmethod
-    def verify_token(token: str) -> dict:
-        logger.info(f"Decode token {token}")
+    def verify_token(self, token: str) -> dict:
+        self.logger.info(f"Decode token {token}")
         if not token:
-            logger.warning("Token not found")
+            self.logger.warning("Token not found")
             raise TokenNotFound("Token not found")
 
-        valid_token: str = token.split(" ")[1]
-        decoded_token: dict = TokenService.decode_token(valid_token)
+        decoded_token: dict = self.__decode_token(token)
         return decoded_token
 
 
 class AuthenticationService:
-    @staticmethod
-    def authenticate_user(username: str, password: str) -> User | None:
-        logger.info(f"Authenticating user {username}")
-        user = User.objects.filter(username=username).first()
+    def __init__(self, user_model, logger):
+        self.user_model = user_model
+        self.logger = logger
+
+    def authenticate_user(self, username: str, password: str) -> User :
+        self.logger.info(f"Authenticating user {username}")
+        user = self.user_model.objects.get(username=username)
 
         if user is None:
-            logger.warning(f"User {username} not found")
-            raise UserDidNotFound("User did not found")
+            self.logger.warning(f"User {username} not found")
+            raise UserNotFound("User not found")
 
-        argon_hasher: PasswordHasher = PasswordHasher()
-        try:
-            argon_hasher.verify(user.password, password)
-        except VerifyMismatchError:
-            logger.warning(f"Password did not match")
-            raise PasswordDidNotMatch("Password did not match")
+        if not user.check_password(password):
+            self.logger.warning(f"Username or password is wrong")
+            raise IncorrectCredentials("Username or password is wrong exception")
 
-        logger.info(f"User {username} authenticated")
+        self.logger.info(f"User {username} authenticated")
         return user
