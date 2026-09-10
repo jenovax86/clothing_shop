@@ -16,7 +16,8 @@ def api_exception_handler(exception: Exception, context: dict[str, Any]) -> Resp
         return Response(
             {
                 "success": False,
-                "message": exception.error_code,
+                "error_code": exception.error_code,
+                "message": exception.message,
             },
             status=exception.status_code,
         )
