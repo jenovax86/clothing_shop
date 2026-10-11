@@ -30,9 +30,9 @@ class JWTAuthentication(BaseAuthentication):
         user_service = get_user_service()
         try:
             payload = token_service.verify_token(token)
-            print(payload)
             user = user_service.find_user_by_id(payload["user_id"])
         except AuthenticationFailed:
             logger.warning('Cannot verify token.')
             raise AuthenticationFailed("Cannot verify token exception.")
+
         return user, payload
