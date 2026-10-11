@@ -3,43 +3,37 @@ from http import HTTPStatus
 from core.exceptions import AbstractException
 
 
-class UserDidNotFound(AbstractException):
+class UserNotFound(AbstractException):
     status_code = HTTPStatus.NOT_FOUND
-    error_code = "Not Found"
-
-
-class PasswordDidNotMatch(AbstractException):
-    status_code = HTTPStatus.CONFLICT
-    error_code = "Passwords don't match"
+    error_code = "Not found"
 
 
 class MissingCredentials(AbstractException):
-    status_code = HTTPStatus.CONFLICT
-    error_code = "Missing Credentials"
+    status_code = HTTPStatus.BAD_REQUEST
+    error_code = "Missing credentials"
 
+
+class IncorrectCredentials(AbstractException):
+    status_code = HTTPStatus.UNAUTHORIZED
+    error_code = "Incorrect credentials"
+
+
+class PasswordUnchanged(AbstractException):
+    status_code = HTTPStatus.BAD_REQUEST
+    error_code = "Password unchanged"
 
 class UsernameIsRequired(AbstractException):
-    status_code = HTTPStatus.CONFLICT
+    status_code = HTTPStatus.BAD_REQUEST
     error_code = "Username not found"
 
 
-class UserAlreadyExists(AbstractException):
-    status_code = HTTPStatus.CONFLICT
-    error_code = "Username already exists"
-
-
 class PasswordIsRequired(AbstractException):
-    status_code = HTTPStatus.CONFLICT
+    status_code = HTTPStatus.BAD_REQUEST
     error_code = "Password is required"
 
 
-class PasswordIsIdentical(AbstractException):
-    status_code = HTTPStatus.CONFLICT
-    error_code = "Password is same"
-
-
 class AddressCantBeEmpty(AbstractException):
-    status_code = HTTPStatus.CONFLICT
+    status_code = HTTPStatus.BAD_REQUEST
     error_code = "Address can't be empty"
 
 
@@ -47,6 +41,7 @@ class AddressAlreadyExists(AbstractException):
     status_code = HTTPStatus.CONFLICT
     error_code = "Address already exists"
 
-class AddressDoesNotExist(AbstractException):
-    status_code = HTTPStatus.CONFLICT
-    error_code = "Address does not exist"
+
+class AddressNoFound(AbstractException):
+    status_code = HTTPStatus.NOT_FOUND
+    error_code = "Address not found"
