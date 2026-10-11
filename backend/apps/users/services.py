@@ -1,96 +1,59 @@
 from datetime import datetime, timezone
 
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
-import logging
+from django.contrib.auth.hashers import make_password
 
-from core.exceptions import UsernameIsRequired, UserDidNotFound, PasswordDidNotMatch, user, AddressCantBeEmpty
-from core.exceptions.user import UserAlreadyExists, PasswordIsRequired, AddressAlreadyExists, AddressDoesNotExist
 from .models import User, Address
-
-logger = logging.getLogger(__name__)
+from .exceptions import UserNotFound, IncorrectCredentials, PasswordUnchanged
+from apps.users.exceptions import AddressAlreadyExists, AddressNoFound
 
 
 class UserService:
-    @staticmethod
-    def create_user(username: str, password: str) -> User:
-        argon_hasher: PasswordHasher = PasswordHasher()
-        hashed_password: str = argon_hasher.hash(password)
-        user: User = User.objects.create(username=username, password=hashed_password)
-        logger.info(f"User {username} created")
+    def __init__(self, user_model: User, address_model: Address, logger):
+        self.user_model = user_model
+        self.address_model = address_model
+        self.logger = logger
+
+    def create_user(self, username: str, password: str) -> User:
+        hashed_password: str = make_password(password)
+        user = self.user_model.objects.create(username=username, password=hashed_password)
+        self.logger.info(f"User {username} created")
         return user
 
-    @staticmethod
-    def find_user_by_id(user_id: int) -> User:
+    def find_user_by_id(self, user_id: int) -> User:
         try:
-            return User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            logger.warning("User not found")
-            raise UserDidNotFound(f"User {id} not found")
+            return self.user_model.objects.get(id=user_id)
+        except self.user_model.DoesNotExist:
+            self.logger.warning("User not found")
+            raise UserNotFound(f"User {id} not found exception.")
 
-    @staticmethod
-    def change_username(user: User, new_username: str) -> None:
-        if not new_username:
-            logger.warning("Username cannot be None")
-            raise UsernameIsRequired("Username is required")
-
-        if User.objects.filter(username=new_username).exists():
-            logger.warning("Username already exists")
-            raise UserAlreadyExists("Username already exists")
-
+    def change_username(self, user: User, new_username: str) -> None:
         user.username = new_username
         user.save(update_fields=["username"])
 
-    @staticmethod
-    def change_password(user: User, old_password: str, new_password: str) -> None:
-        if not old_password or not new_password:
-            logger.warning("Password cannot be None")
-            raise PasswordIsRequired("Password is required")
+    def change_password(self, user: User, old_password: str, new_password: str) -> None:
+        if not user.check_password(old_password):
+            self.logger.warning("Old password is incorrect.")
+            raise IncorrectCredentials("Old password is incorrect exception.")
 
-        password_hasher: PasswordHasher = PasswordHasher()
-        try:
-            logger.info("Verifying password")
-            password_hasher.verify(user.password, old_password)
-        except VerifyMismatchError:
-            logger.warning("Password does not match")
-            raise PasswordDidNotMatch("Password does not match")
-        hashed_password: str = password_hasher.hash(new_password)
-        user.password = hashed_password
+        if old_password == new_password:
+            self.logger.warning("Password unchanged.")
+            raise PasswordUnchanged("New password needs to be different than old password exception.")
+
+        user.set_password(new_password)
         user.save(update_fields=["password"])
 
-    @staticmethod
-    def add_user_address(user: User, address_fields: dict) -> Address:
-        if not address_fields:
-            logger.warning("Address cannot be None")
-            raise AddressCantBeEmpty("Address cannot be empty.")
+    def add_user_address(self, user: User, address_fields: dict) -> Address:
+        if self.address_model.objects.filter(user=user, deleted_at__isnull=True, **address_fields).exists():
+            self.logger.warning("Address already exists")
+            raise AddressAlreadyExists("Address already exists exception.")
 
-        if Address.objects.filter(**address_fields).exists():
-            raise AddressAlreadyExists("Address already exists")
-
-        address = Address.objects.create(user=user, zip_code=address_fields["zip_code"],
-                                         country=address_fields["country"],
-                                         city=address_fields["city"],
-                                         province=address_fields["province"])
+        address = Address.objects.create(user=user, **address_fields)
         return address
 
-    @staticmethod
-    def change_user_address(user: User, address_id: int, address_fields: dict) -> None:
-        old_address = Address.objects.filter(user_id=user.id, id=address_id).first()
-        if old_address is None:
-            logger.warning("Address does not exist")
-            raise AddressDoesNotExist("Address does not exist")
+    def change_user_address(self, user: User, address_id: int, address_fields: dict) -> None:
+        address = Address.objects.filter(user_id=user, id=address_id).update(**address_fields)
 
-        old_address.country = address_fields["country"]
-        old_address.city = address_fields["city"]
-        old_address.zip_code = address_fields["zip_code"]
-        old_address.province = address_fields["province"]
-        old_address.save()
 
-    @staticmethod
-    def delete_address(id: int) -> None:
-        if not Address.objects.filter(id=id).exists():
-            logger.warning("Address does not exist")
-            raise AddressDoesNotExist("Address does not exist")
-        address = Address.objects.get(id=id)
-        address.deleted_at = datetime.now(timezone.utc)
-        address.save(update_fields=["deleted_at"])
+    def delete_user_address(self, user: User, address_id: int) -> None:
+        address = Address.objects.filter(pk=address_id, user_id=user, deleted_at__isnull=True).update(
+            deleted_at=datetime.now(timezone.utc))
