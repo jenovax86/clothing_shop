@@ -1,6 +1,5 @@
 import jwt
 from datetime import datetime, timedelta, timezone
-from django.contrib.auth.hashers import make_password, check_password
 from apps.users.models import User
 from .exceptions import TokenNotFound, InvalidToken, TokenExpired
 from apps.users.exceptions import UserNotFound, IncorrectCredentials
@@ -23,12 +22,12 @@ class TokenService:
         return jwt.encode(
             payload,
             self.jwt_secret,
-            algorithm='HS256'
+            algorithm='HS256',
         )
 
     def __decode_token(self, token: str) -> dict:
         try:
-            return jwt.decode(token, self.jwt_secret, algorithms=['hmac'])
+            return jwt.decode(token, self.jwt_secret, algorithms=['HS256'])
         except jwt.ExpiredSignatureError:
             self.logger.warning("Expired token")
             raise TokenExpired("Expired token")
