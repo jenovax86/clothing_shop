@@ -1,7 +1,11 @@
 from django.db import models
+from django.db.models.functions import Now
 
 
 class Category(models.Model):
+    class Meta:
+        db_table = "categories"
+
     class Categories(models.TextChoices):
         T_SHIRTS = "t_shirts", "T-Shirts"
         SHIRTS = "shirts", "Shirts"
@@ -22,13 +26,16 @@ class Category(models.Model):
         ACCESSORIES = "accessories", "Accessories"
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=30, choices=Categories.choices, null=False, blank=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    name = models.CharField(max_length=30, unique=True, choices=Categories.choices, null=False, blank=False)
+    created_at = models.DateTimeField(db_default=Now())
+    updated_at = models.DateTimeField(db_default=Now())
     deleted_at = models.DateTimeField(null=True, blank=True)
 
 
 class Product(models.Model):
+    class Meta:
+        db_table = "products"
+
     class Gender(models.TextChoices):
         MALE = "male", "Male"
         FEMALE = "female", "Female"
@@ -65,6 +72,14 @@ class Product(models.Model):
     size = models.CharField(max_length=15, choices=Sizes.choices, null=False, blank=False)
     price = models.FloatField(null=False, blank=False)
     color = models.CharField(max_length=15, choices=Colors.choices, null=False, blank=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(db_default=Now())
+    updated_at = models.DateTimeField(db_default=Now())
     deleted_at = models.DateTimeField(null=True, blank=True)
+
+
+class ProductMedia(models.Model):
+    class Meta:
+        db_table = "product_media"
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="media")
+    url = models.URLField(max_length=600, null=False, blank=False)
