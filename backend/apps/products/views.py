@@ -2,129 +2,146 @@ import logging
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.decorators import (api_view, authentication_classes, permission_classes)
 
-from utils import IsAdmin
-from .models import Category
-from .serializers import CategorySerializer, ProductSerializer
-from .services import CategoryService, ProductService
+from core.permissions import IsAdminOrReadingOnly
+
+from .serializers import CategorySerializer, ProductSerializer, ProductFilterSerializer, ProductMediaSerializer
+from .helpers import (get_category_service, get_product_service, get_product_media_service)
+from ..authentication.authentication import JWTAuthentication
 
 logger = logging.getLogger(__name__)
 
-
-class CreateCategory(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
-
-    def post(self, request):
-        logger.info("Post request")
-        serializer = CategorySerializer(data=request.data)
-
-        if serializer.is_valid():
-            CategoryService().create_category(serializer.validated_data["name"])
-            logger.info("Category created successfully")
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+category_service = get_category_service()
+product_service = get_product_service()
+product_media_service = get_product_media_service()
 
 
-class ListCategories(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
-
-    def get(self, request):
-        logger.info("get request")
-        serializer = CategorySerializer(Category.objects.all(), many=True)
+@api_view(['POST', "GET"])
+@permission_classes([IsAuthenticated, IsAdminOrReadingOnly])
+@authentication_classes([JWTAuthentication])
+def category_list_create(request):
+    logger.info("Create new category")
+    if request.method == "GET":
         logger.info("Listing categories")
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        categories = category_service.list_categories()
+        serializer = CategorySerializer(categories, many=True)
+        return Response(
+            {"success": True, "message": "Categories retrieved successfully", "categories": serializer.data},
+            status=status.HTTP_200_OK)
 
-
-class GetCategory(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
-
-    def get(self, request, category_id):
-        logger.info("get request")
-        serializer = CategorySerializer(CategoryService.get_category_by_id(category_id))
-        logger.info("Category retrieved")
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class UpdateCategory(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
-
-    def patch(self, request, category_id):
-        logger.info("patch request")
-        serializer = CategorySerializer(data=request.data)
-        if serializer.is_valid():
-            CategoryService.update_category(category_id, serializer.validated_data["name"])
-            logger.info("Category updated successfully")
-            return Response(serializer.data, status=status.HTTP_200_OK)
+    serializer = CategorySerializer(data=request.data)
+    if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    category_service.create_category(serializer.validated_data['name'])
+    return Response({"success": True, "message": "Category created successfully"}, status=status.HTTP_201_CREATED)
 
 
-class DeleteCategory(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
+@api_view(["PATCH", "DELETE"])
+@permission_classes([IsAuthenticated, IsAdminOrReadingOnly])
+@authentication_classes([JWTAuthentication])
+def category_detail(request, category_id):
+    logger.info("update category")
+    serializer = CategorySerializer(data=request.data)
 
-    def delete(self, request, category_id):
-        logger.info("delete request")
-        CategoryService.delete_category(category_id)
-        logger.info("Category deleted successfully")
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    if request.method == "PATCH":
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        category_service.update_category(serializer.validated_data["name"])
+        return Response({"success": True, "message": "Category updated successfully"},
+                        status=status.HTTP_204_NO_CONTENT)
+
+    category_service.delete_category(category_id=category_id)
+    return Response({
+        "success": True,
+        "message": "category deleted successfully"
+    }, status=status.HTTP_204_NO_CONTENT)
 
 
-class CreateProduct(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
+@api_view(["POST", "GET"])
+@permission_classes([IsAuthenticated, IsAdminOrReadingOnly])
+@authentication_classes([JWTAuthentication])
+def product_list_create(request):
+    logger.info("Create new product")
+    if request.method == "GET":
+        logger.info("Listing products")
+        products = product_service.list_products()
+        serializer = ProductSerializer(products, many=True)
+        return Response(
+            {"success": True, "message": "Products retrieved successfully", "products": serializer.data},
+            status=status.HTTP_200_OK)
 
-    def post(self, request):
-        serializer = ProductSerializer(data=request.data)
-
-        if serializer.is_valid():
-            ProductService.create_product(serializer.validated_data["gender"], serializer.validated_data["category"],
-                                          serializer.validated_data["name"], serializer.validated_data["size"],
-                                          serializer.validated_data["price"], serializer.validated_data["color"], )
-            logger.info(f"Product {serializer.validated_data['name']} is created.")
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    serializer = ProductSerializer(data=request.data)
+    if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    product_service.create_product(serializer.validated_data)
+    return Response({"success": True, "message": "Product created successfully"})
 
 
-class GetProduct(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
+@api_view(["GET"])
+def filter_product(request):
+    logger.info("Filter product")
+    filters = ProductFilterSerializer(data=request.query_params)
+    if not filters.is_valid():
+        return Response(filters.errors, status=status.HTTP_400_BAD_REQUEST)
+    filtered_products = product_service.filter_product(filters.validated_data)
+    products = ProductSerializer(filtered_products, many=True)
 
-    def get(self, request, product_id):
-        logger.info("get request")
-        product = ProductService.get_product_by_id(product_id)
-        serializer = ProductSerializer(product)
-        logger.info("Product retrieved")
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response({"success": True, "message": "Product filtered successfully", "products": products.data},
+                    status=status.HTTP_200_OK)
 
 
-class UpdateProduct(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
+@api_view(["PATCH", "DELETE"])
+@permission_classes([IsAuthenticated, IsAdminOrReadingOnly])
+@authentication_classes([JWTAuthentication])
+def product_detail(request, product_id):
+    serializer = ProductSerializer(data=request.data)
+    if request.method == "PATCH":
+        logger.info("update product")
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        product_service.update_product(product_id=product_id, product_fields=serializer.validated_data)
+        return Response({"success": True, "message": "Product updated successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-    def patch(self, request, product_id):
-        logger.info("patch request")
-        serializer = ProductSerializer(data=request.data)
-        if serializer.is_valid():
-            ProductService.update_product(product_id, product_fields=serializer.validated_data)
-            logger.info("Product updated successfully")
-            return Response(serializer.data, status=status.HTTP_200_OK)
+    product_service.delete_product(product_id=product_id)
+    return Response({"success": True, "message": "Product deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["POST", "GET"])
+@permission_classes([IsAuthenticated, IsAdminOrReadingOnly])
+@authentication_classes([JWTAuthentication])
+def product_media_list_create(request, product_id):
+    if request.method == "GET":
+        logger.info("Listing product medias")
+        product_medias = product_media_service.list_all_medias(product_id=product_id)
+        serializer = ProductMediaSerializer(product_medias, many=True)
+        return Response(
+            {"success": True, "message": "Product medias retrieved successfully", "products": serializer.data},
+            status=status.HTTP_200_OK)
+
+    logger.info("Add new product media")
+    serializer = ProductMediaSerializer(data=request.data)
+    if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    product_media_service.create_media(product_id=product_id, url=serializer.validated_data["url"])
+    return Response({"success": True, "message": "Product media created successfully"}, status=status.HTTP_201_CREATED)
 
 
-class GetProductByGender(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
+@api_view(["PATCH", "DELETE"])
+@permission_classes([IsAuthenticated, IsAdminOrReadingOnly])
+@authentication_classes([JWTAuthentication])
+def product_media_detail(request, product_id, media_id):
+    serializer = ProductMediaSerializer(data=request.data)
+    if request.method == "PATCH":
+        logger.info("Update product media")
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def get(self, request):
-        logger.info("get request")
-        gender = request.query_params.get("gender")
-        product = ProductService.get_products_by_gender(gender)
-        serializer = ProductSerializer(product, many=True)
-        logger.info("Product retrieved")
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        product_media_service.update_product_media(product_id=product_id, media_id=media_id,
+                                                   new_url=serializer.validated_data["url"])
 
-
-class DeleteProduct(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
-
-    def delete(self, request, product_id):
-        logger.info("delete request")
-        ProductService.delete_product(product_id)
-        logger.info("Product deleted successfully")
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"success": True, "message": "Product media updated successfully"}, status=status.HTTP_200_OK)
+    logger.info("Delete product media")
+    product_media_service.delete_product_media(product_id=product_id, media_id=media_id)
+    return Response({"success": True, "message": "Product media deleted successfully"},
+                    status=status.HTTP_204_NO_CONTENT)
