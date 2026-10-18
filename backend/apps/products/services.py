@@ -1,7 +1,7 @@
 from datetime import timezone, datetime
 
 from apps.products.models import Product, Category, ProductMedia
-from .exceptions import CategoryAlreadyExists, CategoryNotFound, ProductAlreadyExists, ProductNotFound
+from .exceptions import CategoryAlreadyExists, CategoryNotFound
 
 
 class CategoryService:
@@ -100,4 +100,4 @@ class ProductMediaService:
 
     def delete_product_media(self, product_id: int, media_id: int) -> None:
         self.logger.info(f"Deleting product media {product_id}")
-        self.product_media_model.objects.filter(pk=media_id, product_id=product_id).delete()
+        self.product_media_model.objects.filter(pk=media_id, product_id=product_id, deleted_at__isnull=True).delete()
