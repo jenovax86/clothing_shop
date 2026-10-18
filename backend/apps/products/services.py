@@ -1,116 +1,103 @@
-import logging
 from datetime import timezone, datetime
 
-from apps.products.models import Product, Category
-from core.exceptions import CategoryAlreadyExists, CategoryDoesNotExist, ProductAlreadyExists, ProductDoesNotExist
-
-logger = logging.getLogger('django')
+from apps.products.models import Product, Category, ProductMedia
+from .exceptions import CategoryAlreadyExists, CategoryNotFound, ProductAlreadyExists, ProductNotFound
 
 
 class CategoryService:
-    @staticmethod
-    def create_category(name: str) -> Category:
-        logger.info(f"Creating category {name}")
-        if Category.objects.filter(name=name).exists():
-            logger.warning(f"Category {name} already exists")
-            raise CategoryAlreadyExists("Category already exists.")
+    def __init__(self, category_model, logger):
+        self.category_model = category_model
+        self.logger = logger
 
-        return Category.objects.create(name=name)
+    def create_category(self, name: str) -> Category:
+        self.logger.info(f"Creating category {name}")
+        category, was_created = self.category_model.objects.get_or_create(name=name)
+        if not was_created:
+            self.logger.warning(f"Category {name} already exists")
+            raise CategoryAlreadyExists("Category already exists exception.")
 
-    @staticmethod
-    def list_categories() -> list[Category]:
-        logger.info(f"Listing categories")
-        categories = list(Category.objects.all())
-        logger.info(f"Found {len(categories)} categories")
-        return categories
+        return category
 
-    @staticmethod
-    def get_category_by_id(category_id: int) -> Category:
-        logger.info(f"Getting category by id {category_id}")
+    def list_categories(self) -> list[Category]:
+        self.logger.info(f"Listing categories")
+        return list(self.category_model.objects.filter(deleted_at__isnull=True).order_by("name"))
+
+    def get_category_by_id(self, category_id: int) -> Category:
+        self.logger.info(f"Getting category by id {category_id}")
         try:
-            return Category.objects.get(id=category_id)
-        except Category.DoesNotExist:
-            logger.warning(f"Category with id {category_id} does not exist")
-            raise CategoryDoesNotExist("Category does not exist.")
+            return self.category_model.objects.get(id=category_id)
+        except self.category_model.DoesNotExist:
+            self.logger.warning(f"Category with id {category_id} does not exist")
+            raise CategoryNotFound("Category does not exist exception.")
 
-    @staticmethod
-    def get_category_by_name(name: str) -> Category:
-        logger.info(f"Getting category by name {name}")
-        try:
-            return Category.objects.get(name=name)
-        except Category.DoesNotExist:
-            logger.warning(f"Category with name {name} does not exist")
-            raise CategoryDoesNotExist("Category does not exist.")
+    def update_category(self, category_id: int, name: str) -> None:
+        self.logger.info(f"Changing category name {name}")
+        self.category_model.filter(pk=category_id, deleted_at__isnull=True).update(name=name)
 
-    @staticmethod
-    def update_category(category_id: int, name: str) -> None:
-        logger.info(f"Changing category name {name}")
-        try:
-            category = CategoryService.get_category_by_id(category_id)
-        except Category.DoesNotExist:
-            logger.warning(f"Category with id {category_id} does not exist")
-            raise CategoryDoesNotExist("Category does not exist.")
-        category.name = name
-        category.save()
-
-    @staticmethod
-    def delete_category(category_id: int) -> None:
-        logger.info(f"Deleting category {category_id}")
-        category = CategoryService.get_category_by_id(category_id)
-        category.deleted_at = datetime.now(timezone.utc)
-        category.save(update_fields=["deleted_at"])
+    def delete_category(self, category_id: int) -> None:
+        self.logger.info(f"Deleting category {category_id}")
+        self.category_model.objects.filter(pk=category_id, deleted_at__isnull=True).update(
+            deleted_at=datetime.now(timezone.utc))
 
 
 class ProductService:
-    @staticmethod
-    def create_product(gender: str, category: Category, name: str, size: str, price: float, color: str) -> Product:
-        logger.info(f"Creating product {name}")
-        if Product.objects.filter(name=name).exists():
-            logger.warning(f"Product with gender {name} already exists")
-            raise ProductAlreadyExists("Product already exists.")
+    def __init__(self, product_model, logger):
+        self.product_model = product_model
+        self.logger = logger
 
-        return Product.objects.create(gender=gender, category=category, name=name, size=size, price=price,
-                                      color=color)
+    def create_product(self, product_fields: dict) -> Product:
+        self.logger.info(f"Creating product %s", product_fields["name"])
+        product = self.product_model.objects.create(**product_fields)
 
-    @staticmethod
-    def get_products_by_gender(gender: str) -> list[Product]:
-        logger.info(f"Getting products by gender {gender}")
-        try:
-            products = list(Product.objects.filter(gender=gender))
-            return products
-        except Product.DoesNotExist:
-            logger.warning(f"Product with gender {gender} does not exist")
-            raise ProductDoesNotExist("Product does not exist.")
+        return product
 
-    @staticmethod
-    def get_product_by_id(product_id: int) -> Product:
-        logger.info(f"Getting product by id {product_id}")
-        try:
-            product = Product.objects.get(id=product_id)
-            return product
-        except Product.DoesNotExist:
-            logger.warning(f"Product with id {product_id} does not exist")
-            raise ProductDoesNotExist("Product does not exist.")
+    def list_products(self) -> list[Product]:
+        self.logger.info(f"Listing products")
+        return list(self.product_model.objects.filter(deleted_at__isnull=True).order_by("name"))
 
-    @staticmethod
-    def update_product(product_id, product_fields: dict) -> Product:
-        logger.info("Change product data")
-        try:
-            product = ProductService.get_product_by_id(product_id)
-        except Product.DoesNotExist:
-            logger.warning(f"Product with id {product_fields['id']} does not exist")
-            raise ProductDoesNotExist("Product does not exist.")
+    def filter_product(self, filters: dict) -> Product:
+        self.logger.info(f"Filtering product %s", filters)
+        products = self.product_model.objects.filter(deleted_at__isnull=True)
 
-        product.gender = product_fields['gender']
-        product.name = product_fields['name']
-        product.size = product_fields['size']
-        product.price = product_fields['price']
-        product.color = product_fields['color']
-        product.save()
+        for field in ("gender", "name", "size", "price", "color", "category"):
+            if field in filters:
+                products = products.filter(**{field: filters[field]})
 
-    @staticmethod
-    def delete_product(product_id: int) -> None:
-        logger.info(f"Deleting product {product_id}")
-        product = ProductService.get_product_by_id(product_id)
-        product.deleted_at = datetime.now(timezone.utc)
-        product.save(update_fields=["deleted_at"])
+        if "min_price" in filters:
+            products = products.filter(price__gte=filters["min_price"])
+
+        if "max_price" in filters:
+            products = products.filter(price__lte=filters["max_price"])
+
+        return products.order_by("name")
+
+    def update_product(self, product_id, product_fields: dict) -> None:
+        self.logger.info("Change product fields")
+        self.product_model.objects.filter(pk=product_id).update(**product_fields)
+
+    def delete_product(self, product_id: int) -> None:
+        self.logger.info(f"Deleting product {product_id}")
+        self.product_model.objects.filter(pk=product_id, deleted_at__isnull=True).update(
+            deleted_at=datetime.now(timezone.utc))
+
+
+class ProductMediaService:
+    def __init__(self, product_media_model, logger):
+        self.product_media_model = product_media_model
+        self.logger = logger
+
+    def create_media(self, product_id: int, url: str) -> ProductMedia:
+        self.logger.info(f"Creating product media %s", url)
+        return self.product_media_model.objects.create(product_id=product_id, url=url)
+
+    def list_all_medias(self, product_id: int) -> list[ProductMedia]:
+        self.logger.info(f"Listing all medias for product %s", product_id)
+        return list(self.product_media_model.objects.filter(product_id=product_id).order_by("url"))
+
+    def update_product_media(self, product_id: int, media_id: int, new_url: str) -> None:
+        self.logger.info(f"Changing product media url {new_url}")
+        self.product_media_model.objects.filter(pk=media_id, product_id=product_id).update(url=new_url)
+
+    def delete_product_media(self, product_id: int, media_id: int) -> None:
+        self.logger.info(f"Deleting product media {product_id}")
+        self.product_media_model.objects.filter(pk=media_id, product_id=product_id).delete()
