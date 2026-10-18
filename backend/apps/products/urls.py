@@ -1,17 +1,14 @@
 from django.urls import path
 
-from .views import CreateCategory, ListCategories, GetCategory, UpdateCategory, DeleteCategory, CreateProduct, \
-    GetProduct, UpdateProduct, DeleteProduct, GetProductByGender
+from . import views
 
 urlpatterns = [
-    path('categories/create/', CreateCategory.as_view(), name='create-category'),
-    path('categories/all/', ListCategories.as_view(), name='list-categories'),
-    path('categories/get/<int:category_id>/', GetCategory.as_view(), name='get_category'),
-    path('categories/update/<int:category_id>/', UpdateCategory.as_view(), name='update_category'),
-    path('categories/delete/<int:category_id>/', DeleteCategory.as_view(), name='update_category'),
-    path('products/create/', CreateProduct.as_view(), name='create_product'),
-    path('products/get/<int:product_id>/', GetProduct.as_view(), name="get_product"),
-    path('products/get/', GetProductByGender.as_view(), name="get_products_by_gender"),
-    path('products/update/<int:product_id>/', UpdateProduct.as_view(), name="update_product"),
-    path('products/delete/<int:product_id>/', DeleteProduct.as_view(), name="delete_product"),
+    path('categories/', views.category_list_create, name='category_list_create'),
+    path('categories/<int:category_id>/', views.category_detail, name='category_detail'),
+    path('products/', views.product_list_create, name='product_list_create'),
+    path('products/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('products/filter/', views.filter_product, name="get_product"),
+    path('product_media/<int:product_id>/', views.product_media_list_create, name='product_media_list_create'),
+    path('product_media/<int:product_id>/<int:media_id>/', views.product_media_detail, name='product_media_detail'),
+
 ]
