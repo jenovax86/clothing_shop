@@ -40,7 +40,7 @@ def change_password(request):
 
     old_password = serializer.validated_data['old_password']
     new_password = serializer.validated_data['new_password']
-    get_user_service().change_password(request.user, old_password, new_password)
+    user_service.change_password(request.user, old_password, new_password)
     return Response({"success": True, "message": "Password changed successfully"}, status=status.HTTP_200_OK)
 
 
@@ -54,7 +54,7 @@ def create_address(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    get_user_service().add_user_address(user=request.user, address_fields=serializer.validated_data)
+    user_service.add_user_address(user=request.user, address_fields=serializer.validated_data)
     return Response({
         "success": True,
         "message": "Address created successfully"
@@ -71,14 +71,14 @@ def address_detail(request, address_id):
         serializer = AddressSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        get_user_service().change_user_address(request.user, address_id=address_id,
+        user_service.change_user_address(request.user, address_id=address_id,
                                                address_fields=serializer.validated_data)
         return Response({
             "success": True,
             "message": "Address updated successfully"
         }, status=status.HTTP_200_OK)
 
-    get_user_service().delete_user_address(request.user, address_id=address_id)
+    user_service.delete_user_address(request.user, address_id=address_id)
     return Response({
         "success": True,
         "message": "Address deleted successfully"
