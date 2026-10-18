@@ -47,13 +47,11 @@ class UserService:
             self.logger.warning("Address already exists")
             raise AddressAlreadyExists("Address already exists exception.")
 
-        address = Address.objects.create(user=user, **address_fields)
-        return address
+        return self.address_model.objects.create(user=user, **address_fields)
 
     def change_user_address(self, user: User, address_id: int, address_fields: dict) -> None:
-        address = Address.objects.filter(user_id=user, id=address_id).update(**address_fields)
-
+        self.address_model.objects.filter(user_id=user, id=address_id).update(**address_fields)
 
     def delete_user_address(self, user: User, address_id: int) -> None:
-        address = Address.objects.filter(pk=address_id, user_id=user, deleted_at__isnull=True).update(
+        self.address_model.objects.filter(pk=address_id, user_id=user, deleted_at__isnull=True).update(
             deleted_at=datetime.now(timezone.utc))
