@@ -12,18 +12,23 @@ class TokenService:
 
     def generate_access_token(self, user_id: int) -> str:
         self.logger.info(f"Generating token for user {user_id}")
-        payload = {
+        access_token_payload = {
             'user_id': user_id,
+            'token_type': "access",
+            'exp': datetime.now(timezone.utc) + timedelta(minutes=5),
+            'iat': datetime.now(timezone.utc)
+        }
+        return jwt.encode(access_token_payload, self.jwt_secret, algorithm='HS256')
+
+    def generate_refresh_token(self, user_id: int) -> str:
+        self.logger.info(f"Generating refresh token for user {user_id}")
+        refresh_token_payload = {
+            'user_id': user_id,
+            'token_type': "refresh",
             'exp': datetime.now(timezone.utc) + timedelta(hours=5),
             'iat': datetime.now(timezone.utc)
         }
-        self.logger.info(f"payload: {payload}")
-
-        return jwt.encode(
-            payload,
-            self.jwt_secret,
-            algorithm='HS256',
-        )
+        return jwt.encode(refresh_token_payload, self.jwt_secret, algorithm='HS256')
 
     def __decode_token(self, token: str) -> dict:
         try:
@@ -45,12 +50,13 @@ class TokenService:
         return decoded_token
 
 
+
 class AuthenticationService:
     def __init__(self, user_model, logger):
         self.user_model = user_model
         self.logger = logger
 
-    def authenticate_user(self, username: str, password: str) -> User :
+    def authenticate_user(self, username: str, password: str) -> User:
         self.logger.info(f"Authenticating user {username}")
         user = self.user_model.objects.get(username=username)
 
